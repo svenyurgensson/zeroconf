@@ -94,6 +94,7 @@ func (r *Resolver) Close() error {
 			return err
 		}
 	}
+	return nil
 }
 
 // Browse for all services of a given type in a given domain.
