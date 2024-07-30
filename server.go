@@ -668,7 +668,7 @@ func addrsForInterface(iface *net.Interface) ([]net.IP, []net.IP) {
 	var v4, v6, v6local []net.IP
 	addrs, _ := iface.Addrs()
 	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+		if ipnet, ok := address.(*net.IPNet); ok {
 			if ipnet.IP.To4() != nil {
 				v4 = append(v4, ipnet.IP)
 			} else {
