@@ -81,6 +81,21 @@ func NewResolver(options ...ClientOption) (*Resolver, error) {
 	}, nil
 }
 
+func (r *Resolver) Close() error {
+	if r.c.ipv4conn != nil {
+		err := r.c.ipv4conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+	if r.c.ipv6conn != nil {
+		err := r.c.ipv6conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+}
+
 // Browse for all services of a given type in a given domain.
 func (r *Resolver) Browse(ctx context.Context, service, domain string, entries chan<- *ServiceEntry) error {
 	params := defaultParams(service)
