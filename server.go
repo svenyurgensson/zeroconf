@@ -144,7 +144,9 @@ const (
 // Server structure encapsulates both IPv4/IPv6 UDP connections
 type Server struct {
 	service  *ServiceEntry
+	udp4conn *net.UDPConn
 	ipv4conn *ipv4.PacketConn
+	udp6conn *net.UDPConn
 	ipv6conn *ipv6.PacketConn
 	ifaces   []net.Interface
 
@@ -157,11 +159,11 @@ type Server struct {
 
 // Constructs server structure
 func newServer(ifaces []net.Interface) (*Server, error) {
-	ipv4conn, err4 := joinUdp4Multicast(ifaces)
+	udp4conn, ipv4conn, err4 := joinUdp4Multicast(ifaces)
 	if err4 != nil {
 		log.Printf("[zeroconf] no suitable IPv4 interface: %s", err4.Error())
 	}
-	ipv6conn, err6 := joinUdp6Multicast(ifaces)
+	udp6conn, ipv6conn, err6 := joinUdp6Multicast(ifaces)
 	if err6 != nil {
 		log.Printf("[zeroconf] no suitable IPv6 interface: %s", err6.Error())
 	}
@@ -171,7 +173,9 @@ func newServer(ifaces []net.Interface) (*Server, error) {
 	}
 
 	s := &Server{
+		udp4conn:	udp4conn,
 		ipv4conn:       ipv4conn,
+		udp6conn:	udp6conn,
 		ipv6conn:       ipv6conn,
 		ifaces:         ifaces,
 		ttl:            3200,
@@ -222,8 +226,14 @@ func (s *Server) shutdown() error {
 	if s.ipv4conn != nil {
 		s.ipv4conn.Close()
 	}
+	if s.udp4conn != nil {
+		s.udp4conn.Close()
+	}
 	if s.ipv6conn != nil {
 		s.ipv6conn.Close()
+	}
+	if s.udp6conn != nil {
+		s.udp6conn.Close()
 	}
 
 	// Wait for connection and routines to be closed
