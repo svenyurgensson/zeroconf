@@ -81,20 +81,8 @@ func NewResolver(options ...ClientOption) (*Resolver, error) {
 	}, nil
 }
 
-func (r *Resolver) Close() error {
-	if r.c.ipv4conn != nil {
-		err := r.c.ipv4conn.Close()
-		if err != nil {
-			return err
-		}
-	}
-	if r.c.ipv6conn != nil {
-		err := r.c.ipv6conn.Close()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (r *Resolver) Close() {
+	r.c.shutdown()
 }
 
 // Browse for all services of a given type in a given domain.
@@ -158,7 +146,9 @@ func defaultParams(service string) *lookupParams {
 
 // Client structure encapsulates both IPv4/IPv6 UDP connections.
 type client struct {
+	udp4conn *net.UDPConn
 	ipv4conn *ipv4.PacketConn
+	udp6conn *net.UDPConn
 	ipv6conn *ipv6.PacketConn
 	ifaces   []net.Interface
 }
@@ -170,25 +160,29 @@ func newClient(opts clientOpts) (*client, error) {
 		ifaces = listMulticastInterfaces()
 	}
 	// IPv4 interfaces
+	var udp4conn *net.UDPConn
 	var ipv4conn *ipv4.PacketConn
 	if (opts.listenOn & IPv4) > 0 {
 		var err error
-		ipv4conn, err = joinUdp4Multicast(ifaces)
+		udp4conn, ipv4conn, err = joinUdp4Multicast(ifaces)
 		if err != nil {
 			return nil, err
 		}
 	}
 	// IPv6 interfaces
+	var udp6conn *net.UDPConn
 	var ipv6conn *ipv6.PacketConn
 	if (opts.listenOn & IPv6) > 0 {
 		var err error
-		ipv6conn, err = joinUdp6Multicast(ifaces)
+		udp6conn, ipv6conn, err = joinUdp6Multicast(ifaces)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return &client{
+		udp4conn: udp4conn,
+		udp6conn: udp6conn,
 		ipv4conn: ipv4conn,
 		ipv6conn: ipv6conn,
 		ifaces:   ifaces,
@@ -325,8 +319,14 @@ func (c *client) shutdown() {
 	if c.ipv4conn != nil {
 		c.ipv4conn.Close()
 	}
+	if c.udp4conn != nil {
+		c.udp4conn.Close()
+	}
 	if c.ipv6conn != nil {
 		c.ipv6conn.Close()
+	}
+	if c.udp6conn != nil {
+		c.udp6conn.Close()
 	}
 }
 
