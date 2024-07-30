@@ -317,12 +317,14 @@ func (c *client) mainloop(ctx context.Context, params *lookupParams) {
 // Shutdown client will close currently open connections and channel implicitly.
 func (c *client) shutdown() {
 	if c.ipv4conn != nil {
+		leaveUdp4Multicast(c.ifaces, c.ipv4conn)
 		c.ipv4conn.Close()
 	}
 	if c.udp4conn != nil {
 		c.udp4conn.Close()
 	}
 	if c.ipv6conn != nil {
+		leaveUdp6Multicast(c.ifaces, c.ipv6conn)
 		c.ipv6conn.Close()
 	}
 	if c.udp6conn != nil {
