@@ -224,12 +224,14 @@ func (s *Server) shutdown() error {
 	close(s.shouldShutdown)
 
 	if s.ipv4conn != nil {
+		leaveUdp4Multicast(s.ifaces, s.ipv4conn)
 		s.ipv4conn.Close()
 	}
 	if s.udp4conn != nil {
 		s.udp4conn.Close()
 	}
 	if s.ipv6conn != nil {
+		leaveUdp6Multicast(s.ifaces, s.ipv6conn)
 		s.ipv6conn.Close()
 	}
 	if s.udp6conn != nil {
