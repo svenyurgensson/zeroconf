@@ -67,6 +67,12 @@ func joinUdp6Multicast(interfaces []net.Interface) (*net.UDPConn, *ipv6.PacketCo
 	return udpConn, pkConn, nil
 }
 
+func leaveUdp6Multicast(interfaces []net.Interface, conn *ipv6.PacketConn) {
+	for _, iface := range interfaces {
+		conn.LeaveGroup(&iface, &net.UDPAddr{IP: mdnsGroupIPv6})
+	}
+}
+
 func joinUdp4Multicast(interfaces []net.Interface) (*net.UDPConn, *ipv4.PacketConn, error) {
 	udpConn, err := net.ListenUDP("udp4", mdnsWildcardAddrIPv4)
 	if err != nil {
@@ -98,6 +104,12 @@ func joinUdp4Multicast(interfaces []net.Interface) (*net.UDPConn, *ipv4.PacketCo
 	}
 
 	return udpConn, pkConn, nil
+}
+
+func leaveUdp4Multicast(interfaces []net.Interface, conn *ipv4.PacketConn) {
+	for _, iface := range interfaces {
+		conn.LeaveGroup(&iface, &net.UDPAddr{IP: mdnsGroupIPv4})
+	}
 }
 
 func listMulticastInterfaces() []net.Interface {
